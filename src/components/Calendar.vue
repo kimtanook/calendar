@@ -5,10 +5,18 @@
 			<div class="year-month">{{ format(currentDate, 'MMMM yyyy') }}</div>
 			<img class="after-btn" src="@/assets/image/angle-right.png" @click="afterMonth" alt="Next Month" />
 		</div>
+		<div class="days-title">
+			<span v-for="day in dayOfTheWeek">{{ day }}</span>
+		</div>
 		<div class="days-wrap">
 			<div v-for="(week, index) in rows" :key="`week-${index}`" class="week">
 				<div v-for="(day, index) in week" :key="index" :class="dayClasses(day)" @click="onClickDate(day)">
-					{{ format(day, 'd') }}
+					<div>
+						{{ format(day, 'd') }}
+					</div>
+					<div class="date_work">
+						{{ dateWork(day) }}
+					</div>
 				</div>
 			</div>
 		</div>
@@ -28,38 +36,32 @@ import {
 	startOfWeek,
 	subMonths,
 } from 'date-fns';
-import { computed, ref, watch } from 'vue';
+import { computed, ref } from 'vue';
 
-const emit = defineEmits(['set-date']);
+// 공수관련 목업데이터
+const mockupData = [
+	{ date: '2024-05-02', work: '1' },
+	{ date: '2024-05-04', work: '2' },
+	{ date: '2024-05-08', work: '0.5' },
+	{ date: '2024-05-11', work: '0.5' },
+	{ date: '2024-05-17', work: '1' },
+	{ date: '2024-05-30', work: '2' },
+];
 
-const setUserDate = ref('');
-const setToday = ref('');
+const dayOfTheWeek = ['일', '월', '화', '수', '목', '금', '토'];
 
-const currentDate = ref(new Date());
-const selectDate = ref(null);
+const emit = defineEmits(['set-date']); // 스케쥴을 위한 emit
 
-const selectFormatDate = ref();
+const setUserDate = ref(''); // 사용자가 선택한 날짜를 저장
+const currentDate = ref(new Date()); // 현재 날짜를 저장
+const selectDate = ref(null); // 선택된 날짜를 저장
 
-const beforeMonth = () => {
-	currentDate.value = subMonths(currentDate.value, 1);
-};
+const monthStart = computed(() => startOfMonth(currentDate.value)); // 현재 월의 시작일을 계산
+const monthEnd = computed(() => endOfMonth(monthStart.value)); // 현재 월의 마지막일을 계산
+const startDate = computed(() => startOfWeek(monthStart.value)); // 현재 월의 시작 요일을 계산
+const endDate = computed(() => endOfWeek(monthEnd.value)); // 현재 월의 마지막 요일을 계산
 
-const afterMonth = () => {
-	currentDate.value = addMonths(currentDate.value, 1);
-};
-
-const onClickDate = (day: any) => {
-	selectDate.value = day;
-	setUserDate.value = format(day, 'yyyyMMdd');
-	setToday.value = format(day, 'yyyy / MM / dd');
-	emit('set-date', { month: format(day, 'MM'), day: format(day, 'dd') });
-};
-
-const monthStart = computed(() => startOfMonth(currentDate.value));
-const monthEnd = computed(() => endOfMonth(monthStart.value));
-const startDate = computed(() => startOfWeek(monthStart.value));
-const endDate = computed(() => endOfWeek(monthEnd.value));
-
+// 달력에 표시될 날짜들을 계산하는 computed 속성
 const rows = computed(() => {
 	const weeks = [];
 	let days = [];
@@ -78,6 +80,36 @@ const rows = computed(() => {
 	return weeks;
 });
 
+// 선택된 날짜의 작업량을 반환하는 함수
+const dateWork = (date: any) => {
+	let work;
+	mockupData.map((item: any) => {
+		if (item.date === format(date, 'yyyy-MM-dd')) {
+			work = item.work;
+			return;
+		}
+	});
+	return work;
+};
+
+// 이전 달로 이동하는 함수
+const beforeMonth = () => {
+	currentDate.value = subMonths(currentDate.value, 1);
+};
+
+// 다음 달로 이동하는 함수
+const afterMonth = () => {
+	currentDate.value = addMonths(currentDate.value, 1);
+};
+
+// 날짜를 클릭했을 때 처리하는 함수
+const onClickDate = (day: any) => {
+	selectDate.value = day;
+	setUserDate.value = format(day, 'yyyyMMdd');
+	emit('set-date', { month: format(day, 'MM'), day: format(day, 'dd') }); // 스케쥴을 위한 emit
+};
+
+// 각 날짜에 대한 클래스를 반환하는 함수
 const dayClasses = (day: any) => ({
 	day: true,
 	'not-current-month': !isSameMonth(day, monthStart.value),
@@ -126,6 +158,11 @@ const dayClasses = (day: any) => ({
 	flex-direction: row;
 	justify-content: space-around;
 }
+.days-title {
+	border: 1px solid red;
+	display: flex;
+	justify-content: space-around;
+}
 .days-wrap {
 	display: flex;
 	flex-direction: column;
@@ -140,7 +177,7 @@ const dayClasses = (day: any) => ({
 	cursor: pointer;
 }
 
-.day.weekend {
+.weekend {
 	color: red;
 }
 .day.not-current-month {
@@ -148,5 +185,8 @@ const dayClasses = (day: any) => ({
 }
 .day.selected-day {
 	background-color: rgb(225, 225, 225);
+}
+.date_work {
+	color: blue;
 }
 </style>

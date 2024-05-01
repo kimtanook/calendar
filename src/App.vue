@@ -6,18 +6,18 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch } from 'vue';
+import { ref } from 'vue';
 import Calendar from './components/Calendar.vue';
 import Schedule from './components/Schedule.vue';
 
 const selectDate = ref();
 
-watch(
-	() => selectDate.value,
-	() => {
-		console.log('selectDate.value : ', selectDate.value);
-	}
-);
+// watch(
+// 	() => selectDate.value,
+// 	() => {
+// 		console.log('selectDate.value : ', selectDate.value);
+// 	}
+// );
 </script>
 
 <style scoped lang="scss">
